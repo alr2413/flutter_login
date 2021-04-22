@@ -18,7 +18,6 @@ import 'src/regex.dart';
 import 'src/widgets/auth_card.dart';
 import 'src/widgets/fade_in.dart';
 import 'src/widgets/hero_text.dart';
-import 'src/widgets/gradient_box.dart';
 export 'src/models/login_data.dart';
 export 'src/providers/login_messages.dart';
 export 'src/providers/login_theme.dart';
@@ -83,7 +82,6 @@ class _Header extends StatefulWidget {
     this.logoController,
     this.titleController,
     required this.loginTheme,
-    this.footer,
   });
 
   final String? logoPath;
@@ -94,7 +92,6 @@ class _Header extends StatefulWidget {
   final LoginTheme loginTheme;
   final AnimationController? logoController;
   final AnimationController? titleController;
-  final String? footer;
 
   @override
   __HeaderState createState() => __HeaderState();
@@ -192,8 +189,8 @@ class __HeaderState extends State<_Header> {
     }
 
     return SafeArea(
-      child: SizedBox(
-        height: (widget.height - MediaQuery.of(context).padding.top),
+      child: Container(
+        // height: (widget.height - MediaQuery.of(context).padding.top),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
@@ -304,8 +301,8 @@ class FlutterLogin extends StatefulWidget {
   /// Set to false to return back to sign in page after successful sign up
   final bool loginAfterSignUp;
 
-  /// Optional footer text for example a copyright notice
-  final String? footer;
+  /// Optional footer widget
+  final Widget? footer;
 
   static final FormFieldValidator<String> defaultEmailValidator = (value) {
     if (value!.isEmpty || !Regex.email.hasMatch(value)) {
@@ -332,6 +329,8 @@ class _FlutterLoginState extends State<FlutterLogin>
   AnimationController? _loadingController;
   AnimationController? _logoController;
   AnimationController? _titleController;
+  AnimationController? _footerController;
+
   double _selectTimeDilation = 1.0;
 
   @override
@@ -345,10 +344,12 @@ class _FlutterLoginState extends State<FlutterLogin>
         if (status == AnimationStatus.forward) {
           _logoController!.forward();
           _titleController!.forward();
+          _footerController!.forward();
         }
         if (status == AnimationStatus.reverse) {
           _logoController!.reverse();
           _titleController!.reverse();
+          _footerController!.reverse();
         }
       });
     _logoController = AnimationController(
@@ -356,6 +357,10 @@ class _FlutterLoginState extends State<FlutterLogin>
       duration: loadingDuration,
     );
     _titleController = AnimationController(
+      vsync: this,
+      duration: loadingDuration,
+    );
+    _footerController = AnimationController(
       vsync: this,
       duration: loadingDuration,
     );
@@ -370,14 +375,15 @@ class _FlutterLoginState extends State<FlutterLogin>
     _loadingController!.dispose();
     _logoController!.dispose();
     _titleController!.dispose();
+    _footerController!.dispose();
     super.dispose();
   }
 
   void _reverseHeaderAnimation() {
-    if (widget.logoTag == null) {
+    if (widget.logoTag != null) {
       _logoController!.reverse();
     }
-    if (widget.titleTag == null) {
+    if (widget.titleTag != null) {
       _titleController!.reverse();
     }
   }
@@ -395,64 +401,75 @@ class _FlutterLoginState extends State<FlutterLogin>
     );
   }
 
+  void _reverseFooterAnimation() {
+    if (widget.footer != null) {
+      _footerController!.reverse();
+    }
+  }
+
+  Widget _buildFooter() {
+    return FadeIn(
+      controller: _footerController,
+      offset: 1.5,
+      fadeDirection: FadeDirection.bottomToTop,
+      child: widget.footer ?? Container(),
+    );
+  }
+
   Widget _buildDebugAnimationButtons() {
     const textStyle = TextStyle(fontSize: 12, color: Colors.white);
 
-    return Positioned(
-      bottom: 0,
-      right: 0,
-      child: Row(
-        key: kDebugToolbarKey,
-        children: <Widget>[
-          MaterialButton(
-            color: Colors.green,
-            onPressed: () {
-              timeDilation = 1.0;
-              showModalBottomSheet(
-                context: context,
-                builder: (_) {
-                  return _AnimationTimeDilationDropdown(
-                    initialValue: _selectTimeDilation,
-                    onChanged: (int index) {
-                      setState(() {
-                        _selectTimeDilation = _AnimationTimeDilationDropdown
-                            .animationSpeeds[index]
-                            .toDouble();
-                      });
-                    },
-                  );
-                },
-              ).then((_) {
-                // wait until the BottomSheet close animation finishing before
-                // assigning or you will have to watch x100 time slower animation
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  timeDilation = _selectTimeDilation;
-                });
+    return Row(
+      key: kDebugToolbarKey,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        MaterialButton(
+          color: Colors.green,
+          onPressed: () {
+            timeDilation = 1.0;
+            showModalBottomSheet(
+              context: context,
+              builder: (_) {
+                return _AnimationTimeDilationDropdown(
+                  initialValue: _selectTimeDilation,
+                  onChanged: (int index) {
+                    setState(() {
+                      _selectTimeDilation = _AnimationTimeDilationDropdown
+                          .animationSpeeds[index]
+                          .toDouble();
+                    });
+                  },
+                );
+              },
+            ).then((_) {
+              // wait until the BottomSheet close animation finishing before
+              // assigning or you will have to watch x100 time slower animation
+              Future.delayed(const Duration(milliseconds: 300), () {
+                timeDilation = _selectTimeDilation;
               });
-            },
-            child: Text('OPTIONS', style: textStyle),
-          ),
-          MaterialButton(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            color: Colors.blue,
-            onPressed: () => authCardKey.currentState!.runLoadingAnimation(),
-            child: Text('LOADING', style: textStyle),
-          ),
-          MaterialButton(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            color: Colors.orange,
-            onPressed: () => authCardKey.currentState!.runChangePageAnimation(),
-            child: Text('PAGE', style: textStyle),
-          ),
-          MaterialButton(
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            color: Colors.red,
-            onPressed: () =>
-                authCardKey.currentState!.runChangeRouteAnimation(),
-            child: Text('NAV', style: textStyle),
-          ),
-        ],
-      ),
+            });
+          },
+          child: Text('OPTIONS', style: textStyle),
+        ),
+        MaterialButton(
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          color: Colors.blue,
+          onPressed: () => authCardKey.currentState!.runLoadingAnimation(),
+          child: Text('LOADING', style: textStyle),
+        ),
+        MaterialButton(
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          color: Colors.orange,
+          onPressed: () => authCardKey.currentState!.runChangePageAnimation(),
+          child: Text('PAGE', style: textStyle),
+        ),
+        MaterialButton(
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          color: Colors.red,
+          onPressed: () => authCardKey.currentState!.runChangeRouteAnimation(),
+          child: Text('NAV', style: textStyle),
+        ),
+      ],
     );
   }
 
@@ -571,25 +588,14 @@ class _FlutterLoginState extends State<FlutterLogin>
     final loginTheme = widget.theme ?? LoginTheme();
     final theme = _mergeTheme(theme: Theme.of(context), loginTheme: loginTheme);
     final deviceSize = MediaQuery.of(context).size;
-    const headerMargin = 15;
+    const headerMargin = 15.0;
     const cardInitialHeight = 300;
-    final cardTopPosition = deviceSize.height / 2 - cardInitialHeight / 2;
+    final cardTopPosition = deviceSize.height / 2 - cardInitialHeight;
     final headerHeight = cardTopPosition - headerMargin;
     final emailValidator =
         widget.emailValidator ?? FlutterLogin.defaultEmailValidator;
     final passwordValidator =
         widget.passwordValidator ?? FlutterLogin.defaultPasswordValidator;
-
-    Widget footerWidget = SizedBox();
-    if (widget.footer != null) {
-      footerWidget = Padding(
-        padding: EdgeInsets.only(bottom: 10),
-        child: Text(
-          widget.footer!,
-          style: loginTheme.footerTextStyle,
-        ),
-      );
-    }
 
     return MultiProvider(
       providers: [
@@ -608,54 +614,47 @@ class _FlutterLoginState extends State<FlutterLogin>
           ),
         ),
       ],
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          children: <Widget>[
-            GradientBox(
+      child: Theme(
+        data: theme,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
                 loginTheme.pageColorLight ?? theme.primaryColor,
                 loginTheme.pageColorDark ?? theme.primaryColorDark,
               ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
             ),
-            SingleChildScrollView(
-              child: Theme(
-                data: theme,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    Positioned(
-                      child: AuthCard(
-                        key: authCardKey,
-                        padding: EdgeInsets.only(top: cardTopPosition),
-                        loadingController: _loadingController,
-                        emailValidator: emailValidator,
-                        passwordValidator: passwordValidator,
-                        onSubmit: _reverseHeaderAnimation,
-                        onSubmitCompleted: widget.onSubmitAnimationCompleted,
-                        hideSignUpButton: widget.hideSignUpButton,
-                        hideForgotPasswordButton:
-                            widget.hideForgotPasswordButton,
-                        loginAfterSignUp: widget.loginAfterSignUp,
-                      ),
-                    ),
-                    Positioned(
-                      top: cardTopPosition - headerHeight - headerMargin,
-                      child: _buildHeader(headerHeight, loginTheme),
-                    ),
-                    Positioned.fill(
-                        child: Align(
-                            alignment: Alignment.bottomCenter,
-                            child: footerWidget))
-                  ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _buildHeader(headerHeight, loginTheme),
+              Expanded(
+                child: AuthCard(
+                  key: authCardKey,
+                  padding: EdgeInsets.only(top: headerMargin),
+                  loadingController: _loadingController,
+                  emailValidator: emailValidator,
+                  passwordValidator: passwordValidator,
+                  onSubmit: () {
+                    _reverseHeaderAnimation();
+                    _reverseFooterAnimation();
+                  },
+                  onSubmitCompleted: widget.onSubmitAnimationCompleted,
+                  hideSignUpButton: widget.hideSignUpButton,
+                  hideForgotPasswordButton: widget.hideForgotPasswordButton,
+                  loginAfterSignUp: widget.loginAfterSignUp,
                 ),
               ),
-            ),
-            if (!kReleaseMode && widget.showDebugButtons)
-              _buildDebugAnimationButtons(),
-          ],
+              _buildFooter(),
+              if (!kReleaseMode && widget.showDebugButtons)
+                _buildDebugAnimationButtons(),
+            ],
+          ),
         ),
       ),
     );

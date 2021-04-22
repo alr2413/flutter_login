@@ -220,6 +220,7 @@ class _AnimatedTextFormFieldState extends State<AnimatedTextFormField> {
       enabled: widget.enabled,
       autocorrect: widget.autocorrect,
       autofillHints: widget.autofillHints,
+      // textDirection: TextDirection.ltr, //alr
     );
 
     if (widget.loadingController != null) {
@@ -246,6 +247,11 @@ class _AnimatedTextFormFieldState extends State<AnimatedTextFormField> {
         child: textField,
       );
     }
+
+    // return Directionality(
+    //   textDirection: TextDirection.ltr,
+    //   child: textField,
+    // ); //alr
 
     return textField;
   }

@@ -837,7 +837,7 @@ void main() {
         onLogin: (data) => null,
         onRecoverPassword: (data) => null,
         passwordValidator: (value) => null,
-        footer: 'Copyright flutter_login'));
+        footer: Text('Copyright flutter_login')));
     await tester.pumpWidget(loginBuilder());
     await tester.pumpAndSettle(loadingAnimationDuration);
 

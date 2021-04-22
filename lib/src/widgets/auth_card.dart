@@ -176,9 +176,10 @@ class AuthCardState extends State<AuthCard> with TickerProviderStateMixin {
     final deviceSize = MediaQuery.of(context).size;
     final cardSize = getWidgetSize(_cardKey)!;
     // add .25 to make sure the scaling will cover the whole screen
-    final widthRatio =
-        deviceSize.width / cardSize.height + (isLogin ? .25 : .65);
-    final heightRatio = deviceSize.height / cardSize.width + .25;
+    final widthRatio = 0;
+    // deviceSize.width / cardSize.height + (isLogin ? .25 : .65);
+    final heightRatio = 0;
+    // deviceSize.height / cardSize.width + .25;
 
     _cardSize2AnimationX =
         Tween<double>(begin: 1.0, end: heightRatio / cardSizeScaleEnd)
@@ -530,7 +531,7 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
 
     if (auth.isSignup && !widget.loginAfterSignUp) {
       showSuccessToast(
-          context, messages.flushbarTitleSuccess, messages.signUpSuccess);
+          context, messages.flushbarTitleSuccess, messages.signupSuccess);
       _switchAuthMode();
       setState(() => _isSubmitting = false);
       return false;
@@ -688,7 +689,7 @@ class _LoginCardState extends State<_LoginCard> with TickerProviderStateMixin {
         disabledTextColor: theme.primaryColor,
         onPressed: buttonEnabled ? _switchAuthMode : null,
         padding: loginTheme.authButtonPadding ??
-            EdgeInsets.symmetric(horizontal: 30.0, vertical: 8.0),
+            EdgeInsets.symmetric(horizontal: 30.0, vertical: 4.0),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textColor: theme.primaryColor,
         child: AnimatedText(
@@ -960,6 +961,7 @@ class _RecoverCardState extends State<_RecoverCard>
                 ),
                 SizedBox(height: 26),
                 _buildRecoverButton(theme, messages),
+                SizedBox(height: 5),
                 _buildBackButton(theme, messages),
               ],
             ),
